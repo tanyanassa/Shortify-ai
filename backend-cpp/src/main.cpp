@@ -8,6 +8,9 @@ int currentId = 1;
 
 #include <algorithm>
 
+#include <unordered_map>
+
+std::unordered_map<std::string, std::string> urlMap;
 std::string encodeBase62(int num)
 {
     std::string chars =
@@ -48,7 +51,7 @@ int main()
         std::string originalURL = body["url"].s();
 
         std::string shortURL = encodeBase62(currentId++);
-
+        urlMap[shortURL] = originalURL;
         crow::json::wvalue response;
 
         response["original_url"] = originalURL;
@@ -56,6 +59,19 @@ int main()
 
         return crow::response(response);
     });
+CROW_ROUTE(app, "/<string>")
+([](std::string code) {
 
+    if (urlMap.find(code) == urlMap.end())
+    {
+        return crow::response(404, "URL not found");
+    }
+
+    crow::response res;
+    res.code = 302;
+    res.set_header("Location", urlMap[code]);
+
+    return res;
+});
     app.port(18080).multithreaded().run();
 }

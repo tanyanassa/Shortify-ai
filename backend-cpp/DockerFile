@@ -1,0 +1,15 @@
+FROM ubuntu:22.04
+
+RUN apt-get update && apt-get install -y \
+    g++ \
+    make
+
+WORKDIR /app
+
+COPY . .
+
+RUN g++ src/main.cpp -Iinclude -o shortify -lws2_32 -lmswsock
+
+EXPOSE 18080
+
+CMD ["./shortify"]

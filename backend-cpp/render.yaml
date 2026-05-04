@@ -1,0 +1,5 @@
+services:
+  - type: web
+    name: shortify-ai
+    env: docker
+    plan: free

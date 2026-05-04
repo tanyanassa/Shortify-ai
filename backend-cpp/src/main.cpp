@@ -1,3 +1,4 @@
+int currentId = 1;
 #define ASIO_STANDALONE
 
 #include "crow/app.h"
@@ -5,11 +6,25 @@
 
 #include <string>
 
-std::string generateShortURL()
-{
-    return "abc123";
-}
+#include <algorithm>
 
+std::string encodeBase62(int num)
+{
+    std::string chars =
+        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+    std::string shortURL;
+
+    while (num > 0)
+    {
+        shortURL += chars[num % 62];
+        num /= 62;
+    }
+
+    std::reverse(shortURL.begin(), shortURL.end());
+
+    return shortURL;
+}
 int main()
 {
     crow::SimpleApp app;
@@ -32,7 +47,7 @@ int main()
 
         std::string originalURL = body["url"].s();
 
-        std::string shortURL = generateShortURL();
+        std::string shortURL = encodeBase62(currentId++);
 
         crow::json::wvalue response;
 

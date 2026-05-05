@@ -3,13 +3,14 @@ int currentId = 1;
 
 #include "crow/app.h"
 #include "crow/json.h"
-
+#include <regex>
 #include <string>
 
 #include <algorithm>
 
 #include <unordered_map>
 
+std::unordered_map<std::string, int> clickCount;
 std::unordered_map<std::string, std::string> urlMap;
 std::string encodeBase62(int num)
 {
@@ -27,6 +28,11 @@ std::string encodeBase62(int num)
     std::reverse(shortURL.begin(), shortURL.end());
 
     return shortURL;
+}
+bool isValidURL(const std::string& url)
+{
+    std::regex pattern("(http|https)://(www\\.)?.+");
+    return std::regex_match(url, pattern);
 }
 int main()
 {
@@ -49,7 +55,10 @@ int main()
         }
 
         std::string originalURL = body["url"].s();
-
+if (!isValidURL(originalURL))
+{
+    return crow::response(400, "Invalid URL format");
+}
         std::string shortURL = encodeBase62(currentId++);
         urlMap[shortURL] = originalURL;
         crow::json::wvalue response;
@@ -66,12 +75,27 @@ CROW_ROUTE(app, "/<string>")
     {
         return crow::response(404, "URL not found");
     }
-
+clickCount[code]++;
     crow::response res;
     res.code = 302;
     res.set_header("Location", urlMap[code]);
 
     return res;
+});
+CROW_ROUTE(app, "/stats/<string>")
+([](std::string code) {
+
+    if (urlMap.find(code) == urlMap.end())
+    {
+        return crow::response(404, "URL not found");
+    }
+
+    crow::json::wvalue res;
+
+    res["url"] = urlMap[code];
+    res["clicks"] = clickCount.count(code) ? clickCount[code] : 0;
+
+    return crow::response(res);
 });
     app.port(18080).multithreaded().run();
 }

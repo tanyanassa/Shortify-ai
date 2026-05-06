@@ -71,11 +71,25 @@ int main()
         }
 
         std::string originalURL = body["url"].s();
+ std::string shortURL;
+
+if (body.has("custom_code"))
+{
+    shortURL = body["custom_code"].s();
+
+    if (urlMap.find(shortURL) != urlMap.end())
+    {
+        return crow::response(400, "Custom code already exists");
+    }
+}
+else
+{
+    shortURL = encodeBase62(currentId++);
+}       
 if (!isValidURL(originalURL))
 {
     return crow::response(400, "Invalid URL format");
 }
-        std::string shortURL = encodeBase62(currentId++);
         urlMap[shortURL] = originalURL;
         saveToFile(shortURL, originalURL);
 

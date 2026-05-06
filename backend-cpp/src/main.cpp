@@ -9,7 +9,7 @@ int currentId = 1;
 #include <algorithm>
 
 #include <unordered_map>
-
+#include <fstream>
 std::unordered_map<std::string, int> clickCount;
 std::unordered_map<std::string, std::string> urlMap;
 std::string encodeBase62(int num)
@@ -34,8 +34,24 @@ bool isValidURL(const std::string& url)
     std::regex pattern("(http|https)://(www\\.)?.+");
     return std::regex_match(url, pattern);
 }
+void saveToFile(const std::string& code, const std::string& url)
+{
+    std::ofstream file("data.txt", std::ios::app);
+    file << code << " " << url << std::endl;
+}
+void loadFromFile()
+{
+    std::ifstream file("data.txt");
+    std::string code, url;
+
+    while (file >> code >> url)
+    {
+        urlMap[code] = url;
+    }
+}
 int main()
 {
+    loadFromFile(); 
     crow::SimpleApp app;
 
     CROW_ROUTE(app, "/health")
@@ -61,6 +77,8 @@ if (!isValidURL(originalURL))
 }
         std::string shortURL = encodeBase62(currentId++);
         urlMap[shortURL] = originalURL;
+        saveToFile(shortURL, originalURL);
+
         crow::json::wvalue response;
 
         response["original_url"] = originalURL;
